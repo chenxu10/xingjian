@@ -62,6 +62,6 @@ only ever destroy the change made *after* you started watching.
 
 ## Rules to live by (the watcher enforces the rest)
 
-- **Tiny, smaller and quicker steps.** If you can't say the change in one sentence, split it.
+- **Tiny, smaller and quicker steps.** If you can't say the change in one sentence, split it. Like running, make sure foot directly under your hip.
 - **After a revert, shrink — never retry the same change.**
 - **Only committed work survives.** Stray files in the repo get committed on the next green save; keep the tree intentional.
