@@ -1,9 +1,12 @@
-# XingJian
+<a id="top"></a>
 
-> 天行健，君子以自强不息。
+<h1 align="center">XingJian</h1>
 
-<details open>
-<summary><strong>English</strong></summary>
+<p align="center"><em>天行健，君子以自强不息。</em></p>
+
+<p align="center">
+  <b>English</b> &nbsp;|&nbsp; <a href="#zh">中文</a>
+</p>
 
 > **xingjian is a pathway to autodidact — for a human, and for an AI agent:**
 > every change is either a *falsifiable* effort, **verified** step forward (tests green → committed)
@@ -69,10 +72,17 @@ only ever destroy the change made *after* you started watching.
 - **After a revert, shrink — never retry the same change.**
 - **Only committed work survives.** Stray files in the repo get committed on the next green save; keep the tree intentional.
 
-</details>
+---
 
-<details>
-<summary><strong>中文</strong></summary>
+<a id="zh"></a>
+
+<h1 align="center">XingJian</h1>
+
+<p align="center"><em>天行健，君子以自强不息。</em></p>
+
+<p align="center">
+  <a href="#top">English</a> &nbsp;|&nbsp; <b>中文</b>
+</p>
 
 > **xingjian 是一条自学之路——为人，亦为 AI 代理：**
 > 每一次修改要么是**可证伪**的尝试、**可验证**的前进（测试绿色 → 已提交），
@@ -137,5 +147,3 @@ uv run python xingjian.py --stop       # 停止
 - **更小、更快的步骤。** 如果你无法用一句话描述这个修改，就拆开它。就像跑步，让脚掌垂直落在髋部正下方。
 - **回退后，缩小范围——永远不要重试同样的修改。**
 - **只有已提交的工作才能留存。** 仓库中的零散文件会在下一次绿色保存时被提交；保持工作目录的整洁。
-
-</details>
