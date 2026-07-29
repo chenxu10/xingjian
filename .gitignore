@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 .xingjian.log
 .xingjian.pid
-.opencode/
+.opencode/*
+.opencode/skills/
