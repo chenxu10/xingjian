@@ -19,8 +19,8 @@
 | Path | What it is |
 |---|---|
 | `xingjian.py` | The Xingjian watcher: pure-stdlib Python, watches your saves, enforces the loop |
-| `cross_entropy.py` | A minimal, pedagogical `torch.nn.CrossEntropyLoss` — built *with* this watcher (see `git log`) |
-| `test_cross_entropy.py` | 16 unittest cases doubling as usage docs for the loss |
+| `src/cross_entropy.py` | A minimal, pedagogical `torch.nn.CrossEntropyLoss` — built *with* this watcher (see `git log`) |
+| `tests/test_cross_entropy.py` | 16 unittest cases doubling as usage docs for the loss |
 
 ## Quick start
 
@@ -95,8 +95,8 @@ only ever destroy the change made *after* you started watching.
 | 路径 | 说明 |
 |---|---|
 | `xingjian.py` | Xingjian 监视器：纯标准库 Python，监视文件保存，执行工作流 |
-| `cross_entropy.py` | 一个极简的教学版 `torch.nn.CrossEntropyLoss`——配合监视器构建（见 `git log`） |
-| `test_cross_entropy.py` | 16 个 unittest 用例，同时也可作为该 loss 的使用文档 |
+| `src/cross_entropy.py` | 一个极简的教学版 `torch.nn.CrossEntropyLoss`——配合监视器构建（见 `git log`） |
+| `tests/test_cross_entropy.py` | 16 个 unittest 用例，同时也可作为该 loss 的使用文档 |
 
 ## 快速开始
 
