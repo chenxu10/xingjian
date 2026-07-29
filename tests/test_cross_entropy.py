@@ -1,7 +1,7 @@
 import math
 import unittest
 
-from cross_entropy import (
+from src.cross_entropy import (
     CrossEntropyLoss,
     _logsumexp,
     cross_entropy,
