@@ -10,9 +10,13 @@
 
 > **xingjian is a pathway to autodidact — for a human, and for an AI agent:**
 > every change is either a *falsifiable* effort, **verified** step forward (tests green → committed)
-> or it is erased (tests red → reverted). Nothing unverified survives, so the
-> codebase only ever moves in one direction: provably better.
+> or it is erased (tests red → reverted).
 
+We believe human cognitive limitions is design features need to be respected not
+bugs to be fixed in AI era. This repo starts by respecting one feature of your brain:
+
+- Your mind starts to wonder if the latency between your action and feedback becomes
+>1s. 
 
 ## What's in this repo
 
