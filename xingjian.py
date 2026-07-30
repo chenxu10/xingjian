@@ -1,27 +1,19 @@
 #!/usr/bin/env python3
 """
+Xingjian: assertion watcher.
 
-Run this in a terminal while you edit. On every save of a .py file it:
+Run this in a terminal while you edit. On every save of a .py file it executes
+that file so its top-level `assert` statements are checked:
 
-    1. executes each saved non-test file (a failing top-level assert is RED;
-       test files are skipped here — the suite below covers them)
-    2. runs the gate command (default: the unittest suite)
-    3. all pass  -> git add -A && git commit       (green: keep the work)
-       any fails -> git reset --hard HEAD
-                    git clean -fd                  (red: DELETE the change)
+    all pass -> git add -A && git commit      (green: keep the work)
+    any fail -> git reset --hard HEAD         (red: DELETE the change)
 
 The revert is the point: failing work is destroyed, forcing tiny steps.
 Ctrl-C to stop. No dependencies, no editor extensions.
 
-Examples:
-    python xingjian.py                                  # foreground, unittest gate
-    python xingjian.py --detach                         # background; logs to .xingjian.log
-    python xingjian.py --stop                           # stop the background watcher
-    python xingjian.py --cmd "uv run pytest -q"         # pytest gate
-    python xingjian.py --cmd "npm test"                 # any project
-    python xingjian.py --keep-new                       # red resets tracked files
-                                                   # but spares new untracked files
-    python xingjian.py --no-run-changed                 # gate = test suite only
+    python xingjian.py              # foreground
+    python xingjian.py --detach     # background; logs to .xingjian.log
+    python xingjian.py --stop       # stop the background watcher
 """
 
 from __future__ import annotations
@@ -36,22 +28,35 @@ from pathlib import Path
 
 IGNORE_DIRS = {".git", ".venv", "__pycache__", ".pytest_cache", ".mypy_cache"}
 POLL_SECONDS = 0.5
-SETTLE_SECONDS = 0.8  # wait for saves to stop before running the gate
+SETTLE_SECONDS = 0.8
+RUN_TIMEOUT = 15.0
+COMMIT_MESSAGE = "xingjian: working %H:%M:%S"
 PID_FILE = Path(".xingjian.pid")
 LOG_FILE = Path(".xingjian.log")
 
 
+def is_ignored(path: Path) -> bool:
+    """True if any path component (e.g. __pycache__) is on the ignore list."""
+    return any(part in IGNORE_DIRS for part in path.parts)
+
+
+def mtime_or_none(path: Path) -> int | None:
+    """Modification time in ns, or None if the file vanished before we could stat it."""
+    try:
+        return path.stat().st_mtime_ns
+    except OSError:
+        return None
+
+
 def snapshot(root: Path) -> dict:
     """Map of every watched .py file -> mtime, so edits/creations/deletions all show up."""
-    mtimes = {}
+    modification_times = {}
     for path in root.rglob("*.py"):
-        if any(part in IGNORE_DIRS for part in path.parts):
-            continue
-        try:
-            mtimes[path] = path.stat().st_mtime_ns
-        except OSError:
-            pass
-    return mtimes
+        if not is_ignored(path):
+            mtime = mtime_or_none(path)
+            if mtime is not None:
+                modification_times[path] = mtime
+    return modification_times
 
 
 def is_test_file(path: Path) -> bool:
@@ -59,16 +64,16 @@ def is_test_file(path: Path) -> bool:
     return name.startswith("test_") or name.endswith("_test.py")
 
 
-def run_changed_file(path: Path, timeout: float) -> int:
+def run_file(path: Path) -> int:
     """Execute a saved non-test file so its top-level asserts are checked."""
-    print(f"xingjian: executing {path.name} ...")
+    print(f"xingjian: scanning assertions in {path.name} ...")
     try:
         return subprocess.run(
-            [sys.executable, str(path)],  # same interpreter/env as the watcher
-            timeout=timeout or None,
+            [sys.executable, str(path)],
+            timeout=RUN_TIMEOUT,
         ).returncode
     except subprocess.TimeoutExpired:
-        print(f"xingjian: {path.name} did not exit within {timeout:g}s")
+        print(f"xingjian: {path.name} did not exit within {RUN_TIMEOUT:g}s")
         return 124
 
 
@@ -79,6 +84,61 @@ def git(*args: str) -> subprocess.CompletedProcess:
 def fail(msg: str):
     print(f"xingjian: {msg}", file=sys.stderr)
     sys.exit(1)
+
+
+def check_preconditions():
+    if git("rev-parse", "--is-inside-work-tree").returncode != 0:
+        fail("not inside a git repository")
+
+
+def commit_green(message: str):
+    git("add", "-A")
+    result = git("commit", "-m", message)
+    if result.returncode == 0:
+        short = git("rev-parse", "--short", "HEAD").stdout.strip()
+        print(f"✅ green → committed {short}: {message}")
+    elif "nothing to commit" in result.stdout + result.stderr:
+        print("✅ green — nothing new to commit")
+    else:
+        fail(f"git commit failed:\n{result.stderr}")
+
+
+def revert_red():
+    git("reset", "--hard", "HEAD")
+    print("   back to last green commit. take a smaller step!")
+
+
+def xingjian_cycle(changed_files):
+    print("\n--- save detected, scanning assertions ---")
+    for path in changed_files:
+        if run_file(path) != 0:
+            print(f"❌ red ({path.name} failed an assertion) → REVERTING your change")
+            revert_red()
+            return
+    commit_green(time.strftime(COMMIT_MESSAGE))
+
+
+def detect_changed(before, after, self_path):
+    """Return saved non-test .py files that are new or modified in `after`."""
+    changed = []
+    for path in after:
+        is_changed = before.get(path) != after[path]  # new or modified
+        was_deleted = not path.exists()                # deleted during the save burst
+        is_test = is_test_file(path)                   # suite covers test files
+        is_watcher = path.resolve() == self_path      # never execute the watcher itself
+        if is_changed and not was_deleted and not is_test and not is_watcher:
+            changed.append(path)
+    return changed
+
+
+def wait_until_settled(after):
+    """Poll until the workspace stops changing; return the final snapshot."""
+    settled = snapshot(Path.cwd())
+    while settled != after:
+        time.sleep(SETTLE_SECONDS)
+        after = settled
+        settled = snapshot(Path.cwd())
+    return settled
 
 
 def running_pid():
@@ -110,8 +170,6 @@ def detach():
     log = open(LOG_FILE, "a", buffering=1)  # line-buffered: tail -f friendly
     os.dup2(log.fileno(), sys.stdout.fileno())
     os.dup2(log.fileno(), sys.stderr.fileno())
-    # sys.stdout keeps its old block buffer across dup2 — force line buffering
-    # so verdicts appear in the log in order and promptly for `tail -f`
     sys.stdout.reconfigure(line_buffering=True)
     sys.stderr.reconfigure(line_buffering=True)
     devnull = os.open(os.devnull, os.O_RDONLY)
@@ -135,88 +193,8 @@ def remove_pid_and_exit(signum, frame):
     sys.exit(0)
 
 
-def check_preconditions(cmd: str):
-    if git("rev-parse", "--is-inside-work-tree").returncode != 0:
-        fail("not inside a git repository")
-    if git("rev-parse", "--verify", "HEAD").returncode != 0:
-        fail("no commits yet — make a baseline commit first")
-    dirty = git("status", "--porcelain").stdout.strip()
-    if dirty:
-        fail(f"working tree must be clean (revert would destroy this):\n{dirty}")
-    print(f"xingjian: baseline run of gate: {cmd}", flush=True)
-    if subprocess.run(cmd, shell=True).returncode != 0:
-        fail("baseline is RED — fix the suite before starting Xingjian")
-
-
-def commit_green(message: str):
-    git("add", "-A")  # -A so new files are committed too (git commit -am misses them)
-    result = git("commit", "-m", message)
-    if result.returncode == 0:
-        short = git("rev-parse", "--short", "HEAD").stdout.strip()
-        print(f"✅ green → committed {short}: {message}")
-    elif "nothing to commit" in result.stdout + result.stderr:
-        print("✅ green — nothing new to commit")
-    else:
-        fail(f"git commit failed:\n{result.stderr}")
-
-
-def revert_red(keep_new: bool):
-    git("reset", "--hard", "HEAD")
-    if not keep_new:
-        # Xingjian purity: a failing NEW file must die too, not just edits.
-        removed = git("clean", "-fd").stdout
-        for line in removed.splitlines():
-            print(f"   {line}")
-    print("   back to last green commit. take a smaller step!")
-
-
-def xingjian_cycle(args, changed_files):
-    print("\n--- change detected, running gate ---")
-    for path in changed_files:
-        if run_changed_file(path, args.run_timeout) != 0:
-            print(f"❌ red ({path.name} failed) → REVERTING your change")
-            revert_red(args.keep_new)
-            return
-    rc = subprocess.run(args.cmd, shell=True).returncode
-    if rc == 0:
-        commit_green(time.strftime(args.message))
-    else:
-        print(f"❌ red (gate exit {rc}) → REVERTING your change")
-        revert_red(args.keep_new)
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--cmd",
-        default="uv run python -m unittest -v",
-        help="gate command; must exit non-zero on failure (default: %(default)s)",
-    )
-    parser.add_argument(
-        "--message",
-        default="xingjian: working %H:%M:%S",
-        help="commit message (strftime allowed) (default: %(default)s)",
-    )
-    parser.add_argument(
-        "--keep-new",
-        action="store_true",
-        help="on red, reset tracked files but keep new untracked files",
-    )
-    parser.add_argument(
-        "--no-run-changed",
-        dest="run_changed",
-        action="store_false",
-        help="do not execute saved non-test files; gate = test suite only "
-             "(default: run them, so a failing top-level assert reverts)",
-    )
-    parser.add_argument(
-        "--run-timeout",
-        type=float,
-        default=15.0,
-        metavar="SECONDS",
-        help="max seconds a saved file may run before it fails the gate "
-             "(0 = no limit) (default: %(default)s)",
-    )
     parser.add_argument(
         "--detach",
         action="store_true",
@@ -237,10 +215,7 @@ def main():
         fail(f"a background xingjian.py is already running (pid {pid}); "
              "stop it first: python xingjian.py --stop")
 
-    check_preconditions(args.cmd)  # foreground, so failures are visible immediately
-    if args.run_changed:
-        print(f"xingjian: saved non-test files will be executed "
-              f"(timeout {args.run_timeout:g}s); disable with --no-run-changed")
+    check_preconditions()
 
     if args.detach:
         pid = detach()
@@ -252,9 +227,10 @@ def main():
         # daemon child falls through into the watch loop
 
     signal.signal(signal.SIGTERM, remove_pid_and_exit)
+
+    self_path = Path(__file__).resolve()
     print(f"xingjian: watching **/*.py every {POLL_SECONDS}s")
-    print("xingjian: GREEN → auto-commit everything | RED → reset --hard"
-          + ("" if args.keep_new else " + clean -fd (new files deleted)"))
+    print("xingjian: GREEN → auto-commit | RED → reset --hard")
     print("xingjian: Ctrl-C to stop")
 
     before = snapshot(Path.cwd())
@@ -262,29 +238,12 @@ def main():
         while True:
             time.sleep(POLL_SECONDS)
             after = snapshot(Path.cwd())
-            if after == before:
-                continue
-            # files changed — wait for the burst of saves to settle
-            while True:
-                time.sleep(SETTLE_SECONDS)
-                settled = snapshot(Path.cwd())
-                if settled == after:
-                    break
-                after = settled
-            if args.run_changed:
-                self_path = Path(__file__).resolve()
-                changed = [
-                    p for p in after
-                    if before.get(p) != after[p]  # new or modified
-                    and p.exists()                # not deleted in this save burst
-                    and not is_test_file(p)       # the suite covers test files
-                    and p.resolve() != self_path  # never execute the watcher itself
-                ]
-            else:
-                changed = []
-            xingjian_cycle(args, changed)
-            # absorb any changes the watcher itself made (a revert rewrites files)
-            before = snapshot(Path.cwd())
+            if after != before:
+                after = wait_until_settled(after)
+                changed = detect_changed(before, after, self_path)
+                xingjian_cycle(changed)
+                # absorb any changes the watcher itself made (a revert rewrites files)
+                before = snapshot(Path.cwd())
     except KeyboardInterrupt:
         print("\nxingjian: stopped. your last commit is the truth.")
 

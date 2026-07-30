@@ -10,17 +10,21 @@
 
 > **xingjian is a pathway to autodidact — for a human, and for an AI agent:**
 > every change is either a *falsifiable* effort, **verified** step forward (tests green → committed)
-> or it is erased (tests red → reverted). Nothing unverified survives, so the
-> codebase only ever moves in one direction: provably better.
+> or it is erased (tests red → reverted).
 
+We believe human cognitive limitions is design features need to be respected not
+bugs to be fixed in AI era. This repo starts by respecting one feature of your brain:
+
+- Your mind starts to wonder if the latency between your action and feedback becomes
+>1s. 
 
 ## What's in this repo
 
 | Path | What it is |
 |---|---|
 | `xingjian.py` | The Xingjian watcher: pure-stdlib Python, watches your saves, enforces the loop |
-| `cross_entropy.py` | A minimal, pedagogical `torch.nn.CrossEntropyLoss` — built *with* this watcher (see `git log`) |
-| `test_cross_entropy.py` | 16 unittest cases doubling as usage docs for the loss |
+| `src/cross_entropy.py` | A minimal, pedagogical `torch.nn.CrossEntropyLoss` — built *with* this watcher (see `git log`) |
+| `tests/test_cross_entropy.py` | 16 unittest cases doubling as usage docs for the loss |
 
 ## Quick start
 
@@ -95,8 +99,8 @@ only ever destroy the change made *after* you started watching.
 | 路径 | 说明 |
 |---|---|
 | `xingjian.py` | Xingjian 监视器：纯标准库 Python，监视文件保存，执行工作流 |
-| `cross_entropy.py` | 一个极简的教学版 `torch.nn.CrossEntropyLoss`——配合监视器构建（见 `git log`） |
-| `test_cross_entropy.py` | 16 个 unittest 用例，同时也可作为该 loss 的使用文档 |
+| `src/cross_entropy.py` | 一个极简的教学版 `torch.nn.CrossEntropyLoss`——配合监视器构建（见 `git log`） |
+| `tests/test_cross_entropy.py` | 16 个 unittest 用例，同时也可作为该 loss 的使用文档 |
 
 ## 快速开始
 
