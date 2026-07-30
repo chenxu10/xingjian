@@ -35,16 +35,28 @@ PID_FILE = Path(".xingjian.pid")
 LOG_FILE = Path(".xingjian.log")
 
 
+def is_ignored(path: Path) -> bool:
+    """True if any path component (e.g. __pycache__) is on the ignore list."""
+    return any(part in IGNORE_DIRS for part in path.parts)
+
+
+def mtime_or_none(path: Path) -> int | None:
+    """Modification time in ns, or None if the file vanished before we could stat it."""
+    try:
+        return path.stat().st_mtime_ns
+    except OSError:
+        return None
+
+
 def snapshot(root: Path) -> dict:
     """Map of every watched .py file -> mtime, so edits/creations/deletions all show up."""
-    mtimes = {}
+    modification_times = {}
     for path in root.rglob("*.py"):
-        if all(part not in IGNORE_DIRS for part in path.parts):
-            try:
-                mtimes[path] = path.stat().st_mtime_ns
-            except OSError:
-                pass
-    return mtimes
+        if not is_ignored(path):
+            mtime = mtime_or_none(path)
+            if mtime is not None:
+                modification_times[path] = mtime
+    return modification_times
 
 
 def is_test_file(path: Path) -> bool:
