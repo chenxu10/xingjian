@@ -256,6 +256,3 @@ def main():
                 before = snapshot(Path.cwd())
     except KeyboardInterrupt:
         print("\nxingjian: stopped. your last commit is the truth.")
-
-if __name__ == "__main__":
-    assert 2 == 3
