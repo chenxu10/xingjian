@@ -193,7 +193,8 @@ def remove_pid_and_exit(signum, frame):
     sys.exit(0)
 
 
-def main():
+def parse_args():
+    """Build the CLI parser and return the parsed arguments."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--detach",
@@ -205,15 +206,24 @@ def main():
         action="store_true",
         help="stop a background xingjian.py started with --detach",
     )
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def handle_stop_or_running_daemon(args):
+    """ Honour --stop and refuse to start a second daemon. Returns when the
+        caller may proceed to start watching."""
     if args.stop:
         stop_daemon()
-        return
+        sys.exit(0)
     pid = running_pid()
     if pid:
         fail(f"a background xingjian.py is already running (pid {pid}); "
              "stop it first: python xingjian.py --stop")
+
+
+def main():
+    args = parse_args()
+    handle_stop_or_running_daemon(args)
 
     check_preconditions()
 
