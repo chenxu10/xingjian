@@ -234,7 +234,6 @@ def main():
             print(f"xingjian: watch verdicts → tail -f {LOG_FILE}")
             print(f"xingjian: stop           → python xingjian.py --stop")
             return
-        # daemon child falls through into the watch loop
 
     signal.signal(signal.SIGTERM, remove_pid_and_exit)
 
