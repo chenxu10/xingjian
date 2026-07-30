@@ -75,4 +75,3 @@ class CrossEntropyLoss:
 
     def __call__(self, logits, targets):
         return cross_entropy(logits, targets, reduction=self.reduction)
-        
