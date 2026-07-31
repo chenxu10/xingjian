@@ -60,7 +60,7 @@ def snapshot(root: Path) -> dict:
 
 
 def run_file(path: Path) -> int:
-    """Execute a saved non-test file so its top-level asserts are checked."""
+    """Execute a saved file so its top-level asserts are checked."""
     print(f"xingjian: scanning assertions in {path.name} ...")
     try:
         return subprocess.run(
