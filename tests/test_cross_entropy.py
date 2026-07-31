@@ -114,3 +114,4 @@ class TestCrossEntropyLossClass(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+    assert 2 == 3
