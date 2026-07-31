@@ -59,11 +59,6 @@ def snapshot(root: Path) -> dict:
     return modification_times
 
 
-def is_test_file(path: Path) -> bool:
-    name = path.name
-    return name.startswith("test_") or name.endswith("_test.py")
-
-
 def run_file(path: Path) -> int:
     """Execute a saved non-test file so its top-level asserts are checked."""
     print(f"xingjian: scanning assertions in {path.name} ...")
