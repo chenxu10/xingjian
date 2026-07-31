@@ -119,14 +119,13 @@ def xingjian_cycle(changed_files):
 
 
 def detect_changed(before, after, self_path):
-    """Return saved non-test .py files that are new or modified in `after`."""
+    """Return saved .py files that are new or modified in `after`."""
     changed = []
     for path in after:
         is_changed = before.get(path) != after[path]  # new or modified
         was_deleted = not path.exists()                # deleted during the save burst
-        is_test = is_test_file(path)                   # suite covers test files
         is_watcher = path.resolve() == self_path      # never execute the watcher itself
-        if is_changed and not was_deleted and not is_test and not is_watcher:
+        if is_changed and not was_deleted and not is_watcher:
             changed.append(path)
     return changed
 
