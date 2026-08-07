@@ -33,3 +33,10 @@ class TestLogSoftmax(unittest.TestCase):
         # exp(log_softmax) is a probability distribution: sums to 1
         for row in log_softmax([[1.0, 2.0, 3.0], [0.1, -0.4, 2.7, 0.0]]):
             self.assertAlmostEqual(sum(math.exp(x) for x in row), 1.0)
+
+
+class TestCrossEntropyMean(unittest.TestCase):
+    def test_single_sample(self):
+        # reference: torch.nn.functional.cross_entropy([[2, 1, 0.1]], [0])
+        loss = cross_entropy([[0,0]], [0])
+        self.assertAlmostEqual(loss, math.log(2))
