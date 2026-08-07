@@ -11,9 +11,9 @@ that file so its top-level `assert` statements are checked:
 The revert is the point: failing work is destroyed, forcing tiny steps.
 Ctrl-C to stop. No dependencies, no editor extensions.
 
-    python xingjian.py              # foreground
-    python xingjian.py --detach     # background; logs to .xingjian.log
-    python xingjian.py --stop       # stop the background watcher
+    uv run xingjian.py              # foreground
+    uv run xingjian.py --detach     # background; logs to .xingjian.log
+    uv run xingjian.py --stop       # stop the background watcher
 """
 
 from __future__ import annotations
