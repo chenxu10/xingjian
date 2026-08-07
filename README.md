@@ -15,8 +15,7 @@
 We believe human cognitive limitions is design features need to be respected not
 bugs to be fixed in AI era. This repo starts by respecting one feature of your brain:
 
-- Your mind starts to wonder if the latency between your action and feedback becomes
->1s. 
+- Your mind starts to wonder if the latency between your action and feedback becomes larger than 1s. 
 
 ## What's in this repo
 
