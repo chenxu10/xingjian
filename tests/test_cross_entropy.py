@@ -2,7 +2,6 @@ import math
 import unittest
 
 from src.cross_entropy import (
-    CrossEntropyLoss,
     _logsumexp,
     cross_entropy,
     log_softmax,
