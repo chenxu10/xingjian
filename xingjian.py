@@ -244,7 +244,7 @@ def main():
             if after != before:
                 after = wait_until_settled(after)
                 changed = detect_changed(before, after, self_path)
-                xingjian_cycle(changed)
+                long_convexity_commit_revert_cycle(changed)
                 # absorb any changes the watcher itself made (a revert rewrites files)
                 before = snapshot(Path.cwd())
     except KeyboardInterrupt:
