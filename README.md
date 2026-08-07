@@ -15,8 +15,7 @@
 We believe human cognitive limitions is design features need to be respected not
 bugs to be fixed in AI era. This repo starts by respecting one feature of your brain:
 
-- Your mind starts to wonder if the latency between your action and feedback becomes
->1s. 
+- Your mind starts to wonder if the latency between your action and feedback becomes larger than 1s. 
 
 ## What's in this repo
 
@@ -38,8 +37,8 @@ uv run python xingjian.py --stop       # stop
 
 Every save of a `.py` file triggers the **two-stage gate**:
 
-1. **Execute each saved non-test file** — a failing top-level `assert` is red.
-   (Test files are skipped here; the suite covers them.)
+1. **Execute each saved file** — a failing top-level `assert` is red.
+   (Test files included: every saved `.py` file is run.)
 2. **Run the test suite** (default: `uv run python -m unittest -v`,
    change with `--cmd "uv run pytest -q"` or `"npm test"`).
 
@@ -114,8 +113,8 @@ uv run python xingjian.py --stop       # 停止
 
 每次保存 `.py` 文件都会触发**两阶段关卡**：
 
-1. **执行每个保存的非测试文件**——顶层 `assert` 失败即为红色。
-   （测试文件在此跳过；由测试套件覆盖。）
+1. **执行每个保存的文件**——顶层 `assert` 失败即为红色。
+   （测试文件也不例外：每个保存的 `.py` 文件都会被执行。）
 2. **运行测试套件**（默认：`uv run python -m unittest -v`，
    可通过 `--cmd "uv run pytest -q"` 或 `"npm test"` 更改）。
 

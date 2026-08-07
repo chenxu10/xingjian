@@ -11,9 +11,9 @@ that file so its top-level `assert` statements are checked:
 The revert is the point: failing work is destroyed, forcing tiny steps.
 Ctrl-C to stop. No dependencies, no editor extensions.
 
-    python xingjian.py              # foreground
-    python xingjian.py --detach     # background; logs to .xingjian.log
-    python xingjian.py --stop       # stop the background watcher
+    uv run xingjian.py              # foreground
+    uv run xingjian.py --detach     # background; logs to .xingjian.log
+    uv run xingjian.py --stop       # stop the background watcher
 """
 
 from __future__ import annotations
@@ -59,13 +59,8 @@ def snapshot(root: Path) -> dict:
     return modification_times
 
 
-def is_test_file(path: Path) -> bool:
-    name = path.name
-    return name.startswith("test_") or name.endswith("_test.py")
-
-
 def run_file(path: Path) -> int:
-    """Execute a saved non-test file so its top-level asserts are checked."""
+    """Execute a saved file so its top-level asserts are checked."""
     print(f"xingjian: scanning assertions in {path.name} ...")
     try:
         return subprocess.run(
@@ -108,7 +103,7 @@ def revert_red():
     print("   back to last green commit. take a smaller step!")
 
 
-def xingjian_cycle(changed_files):
+def long_convexity_commit_revert_cycle(changed_files):
     print("\n--- save detected, scanning assertions ---")
     for path in changed_files:
         if run_file(path) != 0:
@@ -119,14 +114,13 @@ def xingjian_cycle(changed_files):
 
 
 def detect_changed(before, after, self_path):
-    """Return saved non-test .py files that are new or modified in `after`."""
+    """Return saved .py files that are new or modified in `after`."""
     changed = []
     for path in after:
         is_changed = before.get(path) != after[path]  # new or modified
         was_deleted = not path.exists()                # deleted during the save burst
-        is_test = is_test_file(path)                   # suite covers test files
         is_watcher = path.resolve() == self_path      # never execute the watcher itself
-        if is_changed and not was_deleted and not is_test and not is_watcher:
+        if is_changed and not was_deleted and not is_watcher:
             changed.append(path)
     return changed
 
@@ -193,7 +187,8 @@ def remove_pid_and_exit(signum, frame):
     sys.exit(0)
 
 
-def main():
+def parse_args():
+    """Build the CLI parser and return the parsed arguments."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--detach",
@@ -205,15 +200,24 @@ def main():
         action="store_true",
         help="stop a background xingjian.py started with --detach",
     )
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def handle_stop_or_running_daemon(args):
+    """ Honour --stop and refuse to start a second daemon. Returns when the
+        caller may proceed to start watching."""
     if args.stop:
         stop_daemon()
-        return
+        sys.exit(0)
     pid = running_pid()
     if pid:
         fail(f"a background xingjian.py is already running (pid {pid}); "
              "stop it first: python xingjian.py --stop")
+
+
+def main():
+    args = parse_args()
+    handle_stop_or_running_daemon(args)
 
     check_preconditions()
 
@@ -224,7 +228,6 @@ def main():
             print(f"xingjian: watch verdicts → tail -f {LOG_FILE}")
             print(f"xingjian: stop           → python xingjian.py --stop")
             return
-        # daemon child falls through into the watch loop
 
     signal.signal(signal.SIGTERM, remove_pid_and_exit)
 
@@ -241,12 +244,11 @@ def main():
             if after != before:
                 after = wait_until_settled(after)
                 changed = detect_changed(before, after, self_path)
-                xingjian_cycle(changed)
+                long_convexity_commit_revert_cycle(changed)
                 # absorb any changes the watcher itself made (a revert rewrites files)
                 before = snapshot(Path.cwd())
     except KeyboardInterrupt:
         print("\nxingjian: stopped. your last commit is the truth.")
 
-
-if __name__ == "__main__":
+if __name__ == "__main__": 
     main()
