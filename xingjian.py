@@ -103,7 +103,7 @@ def revert_red():
     print("   back to last green commit. take a smaller step!")
 
 
-def xingjian_cycle(changed_files):
+def long_convexity_commit_revert_cycle(changed_files):
     print("\n--- save detected, scanning assertions ---")
     for path in changed_files:
         if run_file(path) != 0:
