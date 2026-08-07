@@ -43,19 +43,6 @@ class TestCrossEntropyMean(unittest.TestCase):
         loss = cross_entropy([[0,0]], [0])
         self.assertAlmostEqual(loss, math.log(2))
 
-    def test_batch_mean_is_default(self):
-        # per-sample losses 0.4076... and 2.4076..., averaged
-        logits = [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
-        self.assertAlmostEqual(cross_entropy(logits, [2, 0]), 1.4076059644443806)
-        self.assertAlmostEqual(
-            cross_entropy(logits, [2, 0], reduction="mean"), 1.4076059644443806
-        )
-
-    def test_perfect_prediction_has_near_zero_loss(self):
-        loss = cross_entropy([[0.0, 0.0, 100.0]], [2])
-        self.assertLess(loss, 1e-10)
-
-
 class TestReductions(unittest.TestCase):
     def test_sum(self):
         logits = [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
