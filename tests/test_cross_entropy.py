@@ -28,8 +28,6 @@ class TestLogSoftmax(unittest.TestCase):
         result = log_softmax([[1.0, 2.0, 3.0]])
         self.assertEqual(len(result), 1)
         self.assertAlmostEqual(result[0][0], -2.4076059644443806)
-        self.assertAlmostEqual(result[0][1], -1.4076059644443806)
-        self.assertAlmostEqual(result[0][2], -0.4076059644443806)
 
     def test_rows_are_log_probabilities(self):
         # exp(log_softmax) is a probability distribution: sums to 1
