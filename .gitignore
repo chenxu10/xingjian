@@ -4,8 +4,3 @@ __pycache__/
 .xingjian.log
 .xingjian.pid
 .opencode/*
-!.opencode/skills/
-.opencode/skills/*
-!.opencode/skills/xingjian/
-.opencode/skills/xingjian/*
-!.opencode/skills/xingjian/SKILL.md
